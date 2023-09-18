@@ -37,7 +37,7 @@ func (h *Handler) CreateCompany(ctx *fasthttp.RequestCtx) {
 			return
 		}
 	}
-	err := h.service.CreateCompany(ctx, req.Company, req.PlatesUse)
+	err := h.companyApp.CreateCompany(ctx, req.Company, req.PlatesUse)
 	if err != nil {
 		h.l.Error("failed CreateCompany: ", err.Error())
 		OutputJsonMessage(ctx, 400, err.Error())
@@ -53,7 +53,7 @@ func (h *Handler) GetCompany(ctx *fasthttp.RequestCtx) {
 		OutputJsonMessage(ctx, 400, err.Error())
 		return
 	}
-	company, err := h.service.GetCompany(ctx, uint32(id))
+	company, err := h.companyApp.GetCompanyByID(ctx, uint32(id))
 	if err != nil {
 		h.l.Error("failed GetCompany: ", err.Error())
 		OutputJsonMessage(ctx, 400, err.Error())

@@ -20,14 +20,16 @@ var (
 type Handler struct {
 	serverHost string
 	server     *fasthttp.Server
-	service    *app.App
+	companyApp *app.Company
+	userApp    *app.User
 	l          *logger.Logger
 }
 
-func New(s *app.App, serverHost string, log *logger.Logger) *Handler {
+func New(c *app.Company, u *app.User, serverHost string, log *logger.Logger) *Handler {
 	h := new(Handler)
 	h.serverHost = serverHost
-	h.service = s
+	h.companyApp = c
+	h.userApp = u
 	h.l = log
 	return h
 }

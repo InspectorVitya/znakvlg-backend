@@ -16,12 +16,12 @@ func (h *Handler) CreateUser(ctx *fasthttp.RequestCtx) {
 	}
 	req.Prepare()
 
-	if invalid := h.service.ValidateUser(ctx, req); len(invalid) > 0 {
+	if invalid := h.userApp.ValidateUser(ctx, req); len(invalid) > 0 {
 		OutputJson(ctx, http.StatusBadRequest, invalid)
 		return
 	}
 
-	err := h.service.CreateUser(ctx, req)
+	err := h.userApp.CreateUser(ctx, req)
 	if err != nil {
 		h.l.Errorf("Create user err:  %w", err)
 		OutputJsonMessage(ctx, 500, err.Error())
@@ -33,7 +33,7 @@ func (h *Handler) CreateUser(ctx *fasthttp.RequestCtx) {
 
 func (h *Handler) GetUserByID(ctx *fasthttp.RequestCtx) {
 	id := ctx.UserValue("id").(string)
-	user, err := h.service.GetUserByID(ctx, id)
+	user, err := h.userApp.GetUserByID(ctx, id)
 	if err != nil {
 		h.l.Errorf("GetUserByID err:  %w", err)
 		OutputJsonMessage(ctx, 500, err.Error())

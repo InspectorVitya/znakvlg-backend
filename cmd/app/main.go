@@ -5,7 +5,8 @@ import (
 	"errors"
 	"github.com/InspectorVitya/znakvlg-backend/internal/app"
 	"github.com/InspectorVitya/znakvlg-backend/internal/config"
-	"github.com/InspectorVitya/znakvlg-backend/internal/database"
+	"github.com/InspectorVitya/znakvlg-backend/internal/repository"
+	"github.com/InspectorVitya/znakvlg-backend/internal/storage"
 	"github.com/InspectorVitya/znakvlg-backend/internal/transport/rest"
 	"github.com/InspectorVitya/znakvlg-backend/pkg/logger"
 	"net/http"
@@ -20,16 +21,28 @@ func main() {
 	log := logger.New(true, true, logger.Console)
 	cfg := config.LoadConfig()
 
-	db, err := database.New(context.TODO(), cfg.DataBase.DBURL)
+	repo := repository.New()
+
+	stor, err := storage.New(context.TODO(), cfg.DBURL)
 	if err != nil {
-		log.Fatalf("cannot init DB: %w", err)
-	}
-	service, err := app.New(log, db)
-	if err != nil {
-		log.Fatalf("cannot init app: %w", err)
+		log.Fatalf("cannot connect db: %w", err)
 	}
 
-	httpServer := rest.New(service, cfg.HTTP.Port, log)
+	companyApp, err := app.NewCompany(log, repo, stor)
+	if err != nil {
+		log.Fatalf("cannot init company app: %w", err)
+	}
+
+	userApp, err := app.NewUser(log, repo, stor)
+	if err != nil {
+		log.Fatalf("cannot init company app: %w", err)
+	}
+
+	if err != nil {
+		log.Fatalf("cannot init company app: %w", err)
+	}
+
+	httpServer := rest.New(companyApp, userApp, cfg.HTTP.Port, log)
 
 	go func() {
 		if err := httpServer.Run(); !errors.Is(err, http.ErrServerClosed) {
@@ -52,7 +65,7 @@ func main() {
 	if err := httpServer.Stop(ctx); err != nil {
 		log.Error(err)
 	}
-	if err := db.Close(ctx); err != nil {
+	if err := stor.Close(); err != nil {
 		log.Error(err)
 	}
 

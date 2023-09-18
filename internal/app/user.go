@@ -4,25 +4,61 @@ import (
 	"context"
 	"fmt"
 	"github.com/InspectorVitya/znakvlg-backend/internal/model"
+	"github.com/InspectorVitya/znakvlg-backend/internal/storage"
 	hasher "github.com/InspectorVitya/znakvlg-backend/pkg/bcrypt"
+	"github.com/InspectorVitya/znakvlg-backend/pkg/logger"
 )
 
-func (app *App) CreateUser(ctx context.Context, user *model.Users) error {
+type User struct {
+	db      UserDB
+	storage storage.Storage
+	l       *logger.Logger
+}
+
+func NewUser(logger *logger.Logger, db UserDB, storage storage.Storage) (*User, error) {
+	app := &User{
+		db:      db,
+		l:       logger,
+		storage: storage,
+	}
+	return app, nil
+}
+
+func (u *User) CreateUser(ctx context.Context, user *model.Users) error {
 	hashedPwd, err := hasher.HashPassword(user.Password)
 	if err != nil {
 		return fmt.Errorf("hash password: %v", err)
 	}
 	user.Password = hashedPwd
-	err = app.db.InsertUser(ctx, user)
+
+	tx, err := u.storage.BeginTx(ctx, "create user")
+	if err != nil {
+		return err
+	}
+	defer func() {
+		err = tx.CommitRollback(ctx, err)
+	}()
+
+	userID, err := u.db.InsertUser(ctx, tx, user)
+
+	if len(user.WorkPlace) > 0 {
+		err := u.db.InsertUserWorkspace(ctx, tx, userID, user.WorkPlace)
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
+
 }
 
-func (app *App) ValidateUser(ctx context.Context, user *model.Users) map[string]string {
+func (u *User) ValidateUser(ctx context.Context, user *model.Users) map[string]string {
 	invalid := user.Validate()
 	if len(invalid) > 0 {
 		return invalid
 	}
-	exist, err := app.db.CheckLogin(ctx, user.Login)
+
+	exist, err := u.db.CheckLogin(ctx, u.storage, user.Login)
 	if err != nil {
 		invalid["error"] = err.Error()
 		return invalid
@@ -36,6 +72,6 @@ func (app *App) ValidateUser(ctx context.Context, user *model.Users) map[string]
 	return invalid
 }
 
-func (app *App) GetUserByID(ctx context.Context, userID string) (model.Users, error) {
-	return app.db.GetUserByID(ctx, userID)
+func (u *User) GetUserByID(ctx context.Context, userID string) (model.Users, error) {
+	return u.db.SelectUserByID(ctx, u.storage, userID)
 }
