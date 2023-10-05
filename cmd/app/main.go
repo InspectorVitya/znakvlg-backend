@@ -8,6 +8,7 @@ import (
 	"github.com/InspectorVitya/znakvlg-backend/internal/repository"
 	"github.com/InspectorVitya/znakvlg-backend/internal/storage"
 	"github.com/InspectorVitya/znakvlg-backend/internal/transport/rest"
+	manager "github.com/InspectorVitya/znakvlg-backend/pkg/jwt"
 	"github.com/InspectorVitya/znakvlg-backend/pkg/logger"
 	"net/http"
 	"os"
@@ -23,26 +24,32 @@ func main() {
 
 	repo := repository.New()
 
-	stor, err := storage.New(context.TODO(), cfg.DBURL)
+	store, err := storage.New(context.TODO(), cfg.DBURL)
 	if err != nil {
 		log.Fatalf("cannot connect db: %w", err)
 	}
 
-	companyApp, err := app.NewCompany(log, repo, stor)
+	companyApp, err := app.NewCompany(log, repo, store)
 	if err != nil {
 		log.Fatalf("cannot init company app: %w", err)
 	}
 
-	userApp, err := app.NewUser(log, repo, stor)
+	userApp, err := app.NewUser(log, repo, store)
 	if err != nil {
 		log.Fatalf("cannot init company app: %w", err)
 	}
 
+	authManager, err := manager.JWTAuthService(cfg.JwtSecret)
+	if err != nil {
+		log.Fatalf("cannot init authManager: %w", err)
+	}
+
+	authApp, err := app.NewAuth(log, repo, authManager, store)
 	if err != nil {
 		log.Fatalf("cannot init company app: %w", err)
 	}
 
-	httpServer := rest.New(companyApp, userApp, cfg.HTTP.Port, log)
+	httpServer := rest.New(companyApp, userApp, authApp, cfg.HTTP.Port, log)
 
 	go func() {
 		if err := httpServer.Run(); !errors.Is(err, http.ErrServerClosed) {
@@ -65,7 +72,7 @@ func main() {
 	if err := httpServer.Stop(ctx); err != nil {
 		log.Error(err)
 	}
-	if err := stor.Close(); err != nil {
+	if err := store.Close(); err != nil {
 		log.Error(err)
 	}
 

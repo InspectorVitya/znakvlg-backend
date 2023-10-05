@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"github.com/InspectorVitya/znakvlg-backend/internal/model"
 	"github.com/InspectorVitya/znakvlg-backend/internal/storage"
+	"github.com/InspectorVitya/znakvlg-backend/pkg/helpers"
 	sq "github.com/Masterminds/squirrel"
 )
 
@@ -27,7 +29,41 @@ func (r Repository) InsertCompany(ctx context.Context, q storage.Query, company 
 	return id, nil
 }
 
-func (r Repository) SelectCompanies(ctx context.Context, ids []uint32) ([]*model.CompanyInfo, error) {
+type companiesInfo struct {
+	ID             uint32 `db:"id"`
+	Title          string `db:"title"`
+	Address        string `db:"address"`
+	Comment        string `db:"comment"`
+	PlateTitle     string `db:"title_plate"`
+	Count          string `db:"count"`
+	WaitAudit      string `db:"wait_audit"`
+	WaitAuditToday string `db:"wait_audit_today"`
+	Audit          string `db:"audit"`
+	AuditToday     string `db:"audit_today"`
+	Deffect        string `db:"deffect"`
+	DefectToday    string `db:"deffect_today"`
+	WaitCheck      string `db:"wait_check"`
+	WaitRecheck    string `db:"wait_recheck"`
+	PlateUsed      string `db:"plate_used"`
+	PlateUsedToday string `db:"plate_used_today"`
+}
+
+func (r Repository) SelectCompanies(ctx context.Context, q storage.Query, ids []uint32) ([]*model.CompanyInfo, error) {
+	startDay, endDay := helpers.GetStartAndEndDay()
+	rows, err := q.QueryAll(ctx, "select company info", selectInfoCompanies, startDay, endDay)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	//res := make(map[uint32]*model.CompanyInfo)
+	for rows.Next() {
+		var comp companiesInfo
+		err := rows.StructScan(&comp)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println(comp)
+	}
 	return nil, nil
 }
 

@@ -95,10 +95,11 @@ type Products struct {
 	RepresentativeDocumentTypeOwnerID            uint8     `json:"representative_document_type_ownerId" db:"representative_document_type_ownerId"`
 	CompanyID                                    uint32    `json:"companyId" db:"company_id"`
 	PlateTypeID                                  uint8     `json:"plateTypeId" db:"plate_type_id"`
-	TypeDocumentOwnerID                          *uint8    `json:"typeDocumentOwnerId" db:"type_document_owner_id"`
+	TypeDocumentOwnerID                          uint8     `json:"typeDocumentOwnerId" db:"type_document_owner_id"`
 	TypeDocumentTransportID                      uint8     `json:"typeDocumentTransportId" db:"type_document_transport_id"`
 	OwnerTypeID                                  uint8     `json:"ownerTypeId" db:"owner_type_id"`
 	StatusProductID                              uint8     `json:"statusProductId" db:"status_product_id"`
+	CreatedAt                                    time.Time `db:"created_at"`
 }
 
 type CompanyInfo struct {
@@ -112,36 +113,37 @@ type CompanyInfo struct {
 	UserCount      int                     `json:"userCount"`
 	Store          map[string]StoreCompany `json:"store"`
 	PlateInfoCheck struct {
-		WaitCheck   uint32 `json:"waitCheck"`
-		WaitRecheck uint32 `json:"waitRecheck"`
+		WaitCheck   int32 `json:"waitCheck"`
+		WaitRecheck int32 `json:"waitRecheck"`
 	} `json:"plateInfoCheck"`
 	PlateWaitAudit struct {
-		WaitAll uint32 `json:"waitAll"`
-		WaitDay uint32 `json:"waitDay"`
+		WaitAll int32 `json:"waitAll"`
+		WaitDay int32 `json:"waitDay"`
 	} `json:"plateWaitAudit"`
 	PlateChecked struct {
-		CheckedAll uint32 `json:"checkedAll"`
-		CheckedDay uint32 `json:"checkedDay"`
+		CheckedAll int32 `json:"checkedAll"`
+		CheckedDay int32 `json:"checkedDay"`
 	} `json:"plateChecked"`
 	PlateDefect struct {
-		DefectAll uint32 `json:"defectAll"`
-		DefectDay uint32 `json:"defectDay"`
+		DefectAll int32 `json:"defectAll"`
+		DefectDay int32 `json:"defectDay"`
 	} `json:"plateDefect"`
 }
 
 type StoreCompany struct {
-	Count        uint32 `json:"count"`
-	PlateAll     uint32 `json:"plateAll"`
-	PlateLastDay uint32 `json:"plateLastDay"`
+	Count        uint32 `json:"count"`        // есть в хранилище
+	PlateAll     uint32 `json:"plateAll"`     // всего использованных
+	PlateLastDay uint32 `json:"plateLastDay"` // всего исп за сегодня
 }
 
 type DefectProduct struct {
 	ID           uint32    `json:"id" db:"id"`
 	LicensePlate string    `json:"licensePlate" db:"license_plate"`
-	CountPlate   int32     `json:"countPlate" db:"count_plate"`
+	CountPlate   int32     `json:"count_plate" db:"count_plate"`
 	DateCreate   time.Time `json:"dateCreate" db:"date_create"`
 	CompanyId    int32     `json:"companyId" db:"company_id"`
 	PlateTypeId  uint8     `json:"plateTypeId" db:"plate_type_id"`
+	CreatedAt    time.Time `db:"created_at"`
 }
 
 type PlateTypes struct {

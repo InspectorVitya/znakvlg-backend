@@ -48,7 +48,7 @@ func (r Repository) CheckLogin(ctx context.Context, q storage.Query, login strin
 
 func (r Repository) SelectUserByID(ctx context.Context, q storage.Query, id string) (model.Users, error) {
 	sql, args, err := sq.Select("id", "login", "email", "password", "blocked", "comment", "phone_number", "surname", "name", "patronymic", "address", "last_login", "role_id").
-		From("users").Where("id=$1", id).ToSql()
+		From("users").Where("id=$1", id).PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
 		return model.Users{}, err
 	}
@@ -81,10 +81,47 @@ func (r Repository) getUserWorkSpace(ctx context.Context, q storage.Query, id st
 	}
 	var ids model.WorkPlace
 
-	err = q.QueryAll(ctx, &ids, "select work space", sql, args...)
+	rows, err := q.QueryAll(ctx, "select work space", sql, args...)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
+	for rows.Next() {
+		var id uint32
+		err = rows.Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
 	return ids, nil
+}
+
+func (r Repository) SelectUserByLogin(ctx context.Context, q storage.Query, login string) (model.Users, error) {
+	sql, args, err := sq.Select("id", "login", "email", "password", "blocked", "comment", "phone_number", "surname", "name", "patronymic", "address", "last_login", "role_id").
+		From("users").Where("login=$1", login).PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return model.Users{}, err
+	}
+
+	user := model.Users{}
+	err = q.QueryOne(ctx, &user, "select user by id", sql, args...)
+	if err != nil {
+		return model.Users{}, err
+	}
+
+	//todo изменить на один запрос и смапить
+	if user.RoleID != 1 {
+		ids, err := r.getUserWorkSpace(ctx, q, user.ID)
+		if err != nil {
+			return model.Users{}, err
+		}
+
+		if len(ids) > 0 {
+			user.WorkPlace = ids
+		}
+	}
+
+	return user, nil
 }

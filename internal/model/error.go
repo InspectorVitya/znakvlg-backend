@@ -6,4 +6,5 @@ var (
 	ErrInvalidPassword = errors.New("invalid password")
 	ErrUserBlocked     = errors.New("user blocked")
 	ErrInternalService = errors.New("err services")
+	ErrInvalidRole     = errors.New("invalid role")
 )

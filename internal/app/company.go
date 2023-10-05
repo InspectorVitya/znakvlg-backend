@@ -64,3 +64,12 @@ func (c *Company) createStoreForCompany(ctx context.Context, tx storage.StorageT
 func (c *Company) GetCompanyByID(ctx context.Context, companyID uint32) (model.Company, error) {
 	return c.db.SelectCompanyByID(ctx, c.storage, companyID)
 }
+
+func (c *Company) GetCompaniesInfo(ctx context.Context) ([]*model.CompanyInfo, error) {
+	companies, err := c.db.SelectCompanies(ctx, c.storage, nil)
+	if err != nil {
+		err = fmt.Errorf("get companies info err: %w", err)
+		return nil, err
+	}
+	return companies, nil
+}

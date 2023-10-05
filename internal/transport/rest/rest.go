@@ -22,14 +22,16 @@ type Handler struct {
 	server     *fasthttp.Server
 	companyApp *app.Company
 	userApp    *app.User
+	authApp    *app.Auth
 	l          *logger.Logger
 }
 
-func New(c *app.Company, u *app.User, serverHost string, log *logger.Logger) *Handler {
+func New(c *app.Company, u *app.User, authApp *app.Auth, serverHost string, log *logger.Logger) *Handler {
 	h := new(Handler)
 	h.serverHost = serverHost
 	h.companyApp = c
 	h.userApp = u
+	h.authApp = authApp
 	h.l = log
 	return h
 }
@@ -43,7 +45,8 @@ func (h *Handler) Run() error {
 
 	admin := r.Group("/admin")
 	h.initAdminRouter(admin)
-
+	auth := r.Group("/auth")
+	h.initAuthRouter(auth)
 	h.l.Info("Run app HTTP server on adr: ", h.serverHost)
 	server := &fasthttp.Server{
 		Handler:            r.Handler,
@@ -56,7 +59,7 @@ func (h *Handler) Run() error {
 func (h *Handler) initAdminRouter(r *router.Group) {
 	company := r.Group("/company")
 	{
-		company.GET("/{id}", h.GetCompany)
+		company.GET("/{id}", h.AuthAdmin(h.GetCompany))
 		company.POST("/", h.CreateCompany)
 	}
 	user := r.Group("/user")
@@ -64,6 +67,11 @@ func (h *Handler) initAdminRouter(r *router.Group) {
 		user.POST("/", h.CreateUser)
 		user.GET("/{id}", h.GetUserByID)
 	}
+}
+
+func (h *Handler) initAuthRouter(r *router.Group) {
+	r.POST("/sign-in", h.SignIn)
+	r.POST("/logout", h.Logout)
 }
 
 // HealthCheck - get the status of server.

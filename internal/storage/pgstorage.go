@@ -51,12 +51,12 @@ func (s *PgStorage) QueryOne(ctx context.Context, dest any, queryName, query str
 	return nil
 }
 
-func (s *PgStorage) QueryAll(ctx context.Context, dest any, queryName, query string, args ...any) error {
-	err := s.conn.SelectContext(ctx, dest, query, args...)
+func (s *PgStorage) QueryAll(ctx context.Context, queryName, query string, args ...any) (*sqlx.Rows, error) {
+	rows, err := s.conn.QueryxContext(ctx, query, args...)
 	if err != nil {
 		err = fmt.Errorf("storage failed query %s: query all err: %w", queryName, err)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return rows, nil
 }

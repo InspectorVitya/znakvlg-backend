@@ -2,13 +2,14 @@ package storage
 
 import (
 	"context"
+	"github.com/jmoiron/sqlx"
 )
 
 type Query interface {
 	Exec(ctx context.Context, queryName, query string, args ...any) error
 	ExecWithResult(ctx context.Context, queryName, query string, args ...any) (any, error)
 	QueryOne(ctx context.Context, dest any, queryName, query string, args ...any) error
-	QueryAll(ctx context.Context, dest any, queryName, query string, args ...any) error
+	QueryAll(ctx context.Context, queryName, query string, args ...any) (*sqlx.Rows, error)
 }
 
 type Storage interface {

@@ -19,25 +19,17 @@ func JWTAuthService(signingKey string) (*JWTServices, error) {
 	return &JWTServices{signingKey: signingKey}, nil
 }
 
-type authCustomClaims struct {
-	UserId     string   `json:"userId"`
-	UserRole   uint8    `json:"userRole"`
-	CompanyIds []uint32 `json:"companyIds"`
-	jwt.RegisteredClaims
-}
-
 type authCustomClaimsAdmin struct {
 	UserId   string `json:"userId"`
 	UserRole uint8  `json:"userRole"`
 	jwt.RegisteredClaims
 }
 
-func (service *JWTServices) GenerateToken(userId string, userRole uint8, companyIds []uint32) (string, error) {
+func (service *JWTServices) GenerateToken(userID string, userRole uint8) (string, error) {
 
-	claims := &authCustomClaims{
-		userId,
+	claims := &model.AuthClaims{
+		userID,
 		userRole,
-		companyIds,
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			Issuer:    "znakvlg",
@@ -55,8 +47,8 @@ func (service *JWTServices) GenerateToken(userId string, userRole uint8, company
 
 }
 
-func (service *JWTServices) ValidateToken(encodedToken string) (*authCustomClaims, error) {
-	token, err := jwt.ParseWithClaims(encodedToken, &authCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
+func (service *JWTServices) ValidateToken(encodedToken string) (*model.AuthClaims, error) {
+	token, err := jwt.ParseWithClaims(encodedToken, &model.AuthClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
@@ -68,7 +60,7 @@ func (service *JWTServices) ValidateToken(encodedToken string) (*authCustomClaim
 		return nil, err
 	}
 
-	if claims, ok := token.Claims.(*authCustomClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(*model.AuthClaims); ok && token.Valid {
 		return claims, nil
 	} else {
 		return nil, errors.New("invalid token")

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/valyala/fasthttp"
+	"strings"
 )
 
 type out struct {
@@ -64,4 +65,18 @@ func OutputCORSOptions(ctx *fasthttp.RequestCtx) {
 	ctx.Response.Header.Set("Access-Control-Allow-Headers", "Access-Control-Allow-Origin,Access-Control-Allow-Methods,Content-Type")
 	ctx.Response.Header.SetStatusCode(200)
 	ctx.Response.Header.Set("Connection", "close")
+}
+
+func createCookie(key string, value string, expire int) *fasthttp.Cookie {
+	if strings.Compare(key, "") == 0 {
+		key = "GoLog-Token"
+	}
+	authCookie := fasthttp.Cookie{}
+	authCookie.SetKey(key)
+	authCookie.SetPath("/")
+	authCookie.SetValue(value)
+	authCookie.SetMaxAge(expire)
+	authCookie.SetHTTPOnly(true)
+	authCookie.SetSameSite(fasthttp.CookieSameSiteLaxMode)
+	return &authCookie
 }

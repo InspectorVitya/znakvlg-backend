@@ -47,14 +47,14 @@ func (s *pgTx) QueryOne(ctx context.Context, dest any, queryName, query string, 
 	return nil
 }
 
-func (s *pgTx) QueryAll(ctx context.Context, dest any, queryName, query string, args ...any) error {
-	err := s.tx.SelectContext(ctx, dest, query, args...)
+func (s *pgTx) QueryAll(ctx context.Context, queryName, query string, args ...any) (*sqlx.Rows, error) {
+	rows, err := s.tx.QueryxContext(ctx, query, args...)
 	if err != nil {
 		err = fmt.Errorf("storage tx failed query %s: query all err: %w", queryName, err)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return rows, nil
 }
 
 func (s *pgTx) Commit(_ context.Context) error {

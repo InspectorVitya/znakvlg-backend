@@ -46,18 +46,22 @@ func (h *Handler) CreateCompany(ctx *fasthttp.RequestCtx) {
 	OutputJsonMessage(ctx, 201, "company created")
 }
 
-func (h *Handler) GetCompany(ctx *fasthttp.RequestCtx) {
-	id, err := strconv.Atoi(ctx.UserValue("id").(string))
+func (h *Handler) GetCompanyInfo(ctx *fasthttp.RequestCtx) {
+
+}
+
+func (h *Handler) GetCompany(ctx *fasthttp.RequestCtx, userID string) {
+	_, err := strconv.Atoi(ctx.UserValue("id").(string))
 	if err != nil {
 		h.l.Error("failed GetCompany: ", err.Error())
 		OutputJsonMessage(ctx, 400, err.Error())
 		return
 	}
-	company, err := h.companyApp.GetCompanyByID(ctx, uint32(id))
+	h.companyApp.GetCompaniesInfo(ctx)
 	if err != nil {
 		h.l.Error("failed GetCompany: ", err.Error())
 		OutputJsonMessage(ctx, 400, err.Error())
 		return
 	}
-	OutputJson(ctx, 200, company)
+	OutputJson(ctx, 200, "company")
 }
